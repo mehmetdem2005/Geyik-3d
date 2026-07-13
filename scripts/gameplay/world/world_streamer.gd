@@ -156,11 +156,11 @@ func _refresh_streaming(force: bool) -> void:
 
 
 func _generate_next_chunk() -> void:
-	var coordinate := _generation_queue.pop_front()
+	var coordinate: Vector2i = _generation_queue.pop_front()
 	if _active_chunks.has(coordinate):
 		return
-	var distance := coordinate.distance_squared_to(_current_center)
-	var resolution := 16 if distance <= 1 else 10
+	var distance: float = coordinate.distance_squared_to(_current_center)
+	var resolution: int = 16 if distance <= 1.0 else 10
 	var chunk := WorldChunk.new()
 	_active_chunks[coordinate] = chunk
 	add_child(chunk)

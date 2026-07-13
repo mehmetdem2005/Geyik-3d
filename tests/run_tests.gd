@@ -57,14 +57,15 @@ func _test_damage_lifecycle() -> void:
 
 
 func _test_input_edge_consumption() -> void:
-	InputRouter.clear_gameplay_input()
-	InputRouter.set_action(&"test_action", true)
-	InputRouter.set_action(&"test_action", false)
-	_expect(InputRouter.consume_action_pressed(&"test_action"), "Touch press edge should survive button release.")
-	_expect(not InputRouter.consume_action_pressed(&"test_action"), "Touch press edge must be consumed exactly once.")
+	var router: Node = load("res://scripts/autoload/input_router.gd").new()
+	router.clear_gameplay_input()
+	router.set_action(&"test_action", true)
+	router.set_action(&"test_action", false)
+	_expect(router.consume_action_pressed(&"test_action"), "Touch press edge should survive button release.")
+	_expect(not router.consume_action_pressed(&"test_action"), "Touch press edge must be consumed exactly once.")
+	router.free()
 
 
 func _expect(condition: bool, message: String) -> void:
 	if not condition:
 		_failures.append(message)
-

@@ -1,0 +1,29 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#122b2a"/>
+      <stop offset=".6" stop-color="#3c5947"/>
+      <stop offset="1" stop-color="#0b1712"/>
+    </linearGradient>
+    <radialGradient id="sun">
+      <stop offset="0" stop-color="#ffd994" stop-opacity=".9"/>
+      <stop offset="1" stop-color="#ffd994" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <circle cx="1190" cy="250" r="260" fill="url(#sun)"/>
+  <path d="M0 530 170 410l170 105 190-176 190 189 175-124 165 120 214-171 326 181v366H0Z" fill="#14261d" opacity=".9"/>
+  <path d="M0 650c250-90 480-40 710 15 260 62 540-100 890-22v257H0Z" fill="#07110d"/>
+  <g fill="#07110d">
+    <path d="m125 660 57-178 57 178h-31l45 94H111l44-94Z"/>
+    <path d="m1340 674 68-220 68 220h-36l51 108h-166l51-108Z"/>
+    <path d="m1100 690 42-142 42 142h-24l35 76h-106l33-76Z"/>
+  </g>
+  <g transform="translate(780 468) scale(1.7)" fill="#d9c6a1">
+    <path d="M0 95c-17-16-29-36-28-58 0-21 12-40 28-40s28 19 28 40c1 22-11 42-28 58Z"/>
+    <path d="M-15 7-33-13-45-35M-26-6l-23-3-16-15M15 7l18-20 12-22M26-6l23-3 16-15" fill="none" stroke="#d9c6a1" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <text x="800" y="700" text-anchor="middle" fill="#f0e3c7" font-family="sans-serif" font-size="92" font-weight="700" letter-spacing="20">GEYİK 3D</text>
+  <text x="800" y="758" text-anchor="middle" fill="#c99b56" font-family="sans-serif" font-size="26" letter-spacing="8">ORMANIN SESSİZLİĞİNİ DİNLE</text>
+</svg>
+

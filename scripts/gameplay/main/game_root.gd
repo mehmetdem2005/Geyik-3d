@@ -18,4 +18,5 @@ func _ready() -> void:
 	world.set_player(player)
 	if OS.has_feature("mobile"):
 		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR_LANDSCAPE)
-
+	if "--ci-smoke" in OS.get_cmdline_user_args():
+		GameState.start_hunt()

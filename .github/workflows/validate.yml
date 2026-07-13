@@ -30,7 +30,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          godot --headless --path . --quit-after 180 2>&1 | tee /tmp/godot-smoke.log
+          godot --headless --path . --quit-after 360 -- --ci-smoke 2>&1 | tee /tmp/godot-smoke.log
           if grep -E "SCRIPT ERROR|ERROR:" /tmp/godot-smoke.log; then
             echo "Runtime errors were found while booting the main scene."
             exit 1

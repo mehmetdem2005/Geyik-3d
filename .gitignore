@@ -1,0 +1,19 @@
+# Godot generated state
+.godot/
+*.tmp
+
+# Native and export artifacts
+build/
+dist/
+exports/
+*.pck
+*.zip
+*.exe
+*.app/
+
+# Editor and operating system noise
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+

@@ -86,7 +86,7 @@ func _build_world_hud() -> void:
 	status_panel.add_theme_stylebox_override("panel", _style_box(PANEL, 14.0, GOLD.darkened(0.25), 1))
 	status_panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	status_panel.position = Vector2(20, 18)
-	status_panel.size = Vector2(240, 130)
+	status_panel.size = Vector2(285, 130)
 	_root.add_child(status_panel)
 	var status_vbox := VBoxContainer.new()
 	status_vbox.add_theme_constant_override("separation", 5)
@@ -99,7 +99,7 @@ func _build_world_hud() -> void:
 	status_vbox.add_child(stamina_label)
 	_stamina_bar = _progress_bar(GOLD, 100.0)
 	status_vbox.add_child(_stamina_bar)
-	_population_label = _label("🦌 0   🐺 0   🐻 0", 17, IVORY)
+	_population_label = _label("GEYİK 0  |  KURT 0  |  AYI 0", 14, IVORY)
 	status_vbox.add_child(_population_label)
 
 	var ammo_panel := PanelContainer.new()
@@ -200,7 +200,7 @@ func _build_touch_controls() -> void:
 	look_zone.anchor_right = 1.0
 	look_zone.anchor_bottom = 1.0
 	_controls.add_child(look_zone)
-	var joystick := VirtualJoystick.new()
+	var joystick := HuntVirtualJoystick.new()
 	joystick.name = "MovementJoystick"
 	joystick.anchor_right = 0.55
 	joystick.anchor_bottom = 1.0
@@ -355,7 +355,7 @@ func _on_ammo_changed(in_magazine: int, reserve: int, reloading: bool) -> void:
 
 
 func _on_population_changed(counts: Dictionary) -> void:
-	_population_label.text = "🦌 %s   🐺 %s   🐻 %s" % [counts.get(&"deer", 0), counts.get(&"wolf", 0), counts.get(&"bear", 0)]
+	_population_label.text = "GEYİK %s  |  KURT %s  |  AYI %s" % [counts.get(&"deer", 0), counts.get(&"wolf", 0), counts.get(&"bear", 0)]
 
 
 func _on_objective_updated(title: String, detail: String, _progress: float) -> void:

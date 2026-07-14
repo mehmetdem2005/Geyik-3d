@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="AnimalDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/animal_definition.gd" id="1_animal"]
+
+[resource]
+script = ExtResource("1_animal")
+species_id = &"wolf"
+species_name = "Bozkurt"
+is_predator = true
+body_color = Color(0.38, 0.4, 0.4, 1)
+maximum_health = 78.0
+walk_speed = 2.8
+trot_speed = 5.8
+flee_speed = 9.4
+attack_damage = 14.0
+attack_range = 2.1
+attack_cooldown = 1.15
+aggression_range = 55.0
+hearing_range = 112.0
+vision_range = 86.0
+field_of_view_degrees = 150.0
+calm_after_seconds = 9.0
+minimum_trophy = 55.0
+maximum_trophy = 115.0
+

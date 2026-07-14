@@ -1,0 +1,40 @@
+name: Godot validation
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Godot
+        uses: chickensoft-games/setup-godot@v2.4.1
+        with:
+          version: 4.7.0
+          use-dotnet: false
+          include-templates: false
+
+      - name: Import project and check scripts
+        run: godot --headless --path . --editor --quit-after 5
+
+      - name: Boot the complete game scene
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 360 -- --ci-smoke 2>&1 | tee /tmp/godot-smoke.log
+          if grep -E "SCRIPT ERROR|ERROR:" /tmp/godot-smoke.log; then
+            echo "Runtime errors were found while booting the main scene."
+            exit 1
+          fi
+
+      - name: Run deterministic unit checks
+        run: godot --headless --path . --script res://tests/run_tests.gd

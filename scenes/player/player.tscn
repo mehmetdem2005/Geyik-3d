@@ -1,0 +1,57 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/gameplay/player/player_controller.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/gameplay/weapons/rifle_controller.gd" id="2_rifle"]
+[ext_resource type="Resource" path="res://scripts/data/anadolu_308.tres" id="3_definition"]
+[ext_resource type="Script" path="res://scripts/core/health_component.gd" id="4_health"]
+
+[sub_resource type="CapsuleShape3D" id="Capsule_player"]
+radius = 0.38
+height = 1.78
+
+[sub_resource type="CapsuleMesh" id="Capsule_debug"]
+radius = 0.38
+height = 1.78
+
+[node name="Player" type="CharacterBody3D"]
+collision_layer = 2
+collision_mask = 1
+floor_snap_length = 0.3
+script = ExtResource("1_player")
+
+[node name="Health" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("4_health")
+maximum_health = 100.0
+
+[node name="StandingShape" type="CollisionShape3D" parent="."]
+unique_name_in_owner = true
+position = Vector3(0, 0.89, 0)
+shape = SubResource("Capsule_player")
+
+[node name="DebugBody" type="MeshInstance3D" parent="."]
+visible = false
+position = Vector3(0, 0.89, 0)
+mesh = SubResource("Capsule_debug")
+
+[node name="Head" type="Node3D" parent="."]
+unique_name_in_owner = true
+position = Vector3(0, 1.66, 0)
+
+[node name="Camera" type="Camera3D" parent="Head"]
+unique_name_in_owner = true
+current = true
+near = 0.05
+far = 800.0
+
+[node name="Rifle" type="Node3D" parent="Head/Camera"]
+unique_name_in_owner = true
+position = Vector3(0.28, -0.24, -0.52)
+script = ExtResource("2_rifle")
+definition = ExtResource("3_definition")
+
+[node name="InteractionRay" type="RayCast3D" parent="Head/Camera"]
+unique_name_in_owner = true
+target_position = Vector3(0, 0, -3.2)
+collision_mask = 20
+collide_with_areas = true

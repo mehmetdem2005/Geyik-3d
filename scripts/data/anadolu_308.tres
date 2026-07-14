@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weapon_definition.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+display_name = "Anadolu .308"
+magazine_size = 5
+starting_reserve = 20
+fire_interval = 0.82
+reload_duration = 2.45
+muzzle_velocity = 815.0
+max_range = 520.0
+drag_coefficient = 0.00042
+zero_range = 100.0
+projectile_mass_grains = 150.0
+gravity_scale = 1.0
+base_damage = 62.0
+hip_spread_degrees = 1.8
+aimed_spread_degrees = 0.08
+scope_fov = 17.0
+recoil_pitch_degrees = 2.2
+report_loudness = 145.0
+

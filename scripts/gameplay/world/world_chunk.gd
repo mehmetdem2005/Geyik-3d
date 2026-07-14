@@ -38,7 +38,7 @@ func _build_ground() -> void:
 			var height := _world.sample_height(world_x, world_z)
 			var vertex_index := z_index * side + x_index
 			vertices[vertex_index] = Vector3(local_x, height, local_z)
-			uvs[vertex_index] = Vector2(world_x, world_z) * 0.035
+			uvs[vertex_index] = Vector2(world_x, world_z) * 0.10
 			colors[vertex_index] = _world.sample_ground_color(world_x, world_z, height)
 	for z_index in _resolution:
 		for x_index in _resolution:
@@ -46,7 +46,10 @@ func _build_ground() -> void:
 			var top_right := top_left + 1
 			var bottom_left := top_left + side
 			var bottom_right := bottom_left + 1
-			indices.append_array(PackedInt32Array([top_left, bottom_left, top_right, top_right, bottom_left, bottom_right]))
+			# Godot's clockwise front-face convention requires this order when the
+			# terrain grid is laid out in local X/Z. The previous order exposed only
+			# the underside, creating a sky-colored hole below the camera.
+			indices.append_array(PackedInt32Array([top_left, top_right, bottom_left, top_right, bottom_right, bottom_left]))
 	_accumulate_normals(vertices, indices, normals)
 
 	var arrays := []
@@ -71,6 +74,7 @@ func _build_ground() -> void:
 		faces[index] = vertices[indices[index]]
 	var ground_shape := ConcavePolygonShape3D.new()
 	ground_shape.set_faces(faces)
+	ground_shape.backface_collision = true
 	var body := StaticBody3D.new()
 	body.name = "GroundCollision"
 	body.collision_layer = 1
@@ -86,7 +90,9 @@ func _accumulate_normals(vertices: PackedVector3Array, indices: PackedInt32Array
 		var a := indices[triangle]
 		var b := indices[triangle + 1]
 		var c := indices[triangle + 2]
-		var normal := (vertices[b] - vertices[a]).cross(vertices[c] - vertices[a]).normalized()
+		# Keep lighting normals pointing up even though render front faces use
+		# clockwise winding.
+		var normal := (vertices[c] - vertices[a]).cross(vertices[b] - vertices[a]).normalized()
 		normals[a] = normals[a] + normal
 		normals[b] = normals[b] + normal
 		normals[c] = normals[c] + normal
@@ -113,7 +119,7 @@ func _build_water_strip() -> void:
 		return
 	for segment in segments:
 		var base := segment * 2
-		indices.append_array(PackedInt32Array([base, base + 2, base + 1, base + 1, base + 2, base + 3]))
+		indices.append_array(PackedInt32Array([base, base + 1, base + 2, base + 1, base + 3, base + 2]))
 	var arrays := []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = vertices
@@ -143,8 +149,10 @@ func _build_vegetation() -> void:
 	var quality := int(SettingsService.get_value(&"vegetation_quality", 1))
 	var tree_budget := 28 + quality * 14
 	var rock_budget := 7 + quality * 3
+	var grass_budget := 72 + quality * 42 if _resolution >= 18 else 0
 	var tree_transforms: Array[Transform3D] = []
 	var rock_transforms: Array[Transform3D] = []
+	var grass_transforms: Array[Transform3D] = []
 	for index in tree_budget:
 		var local_position := Vector3(rng.randf_range(2.0, _world.chunk_size - 2.0), 0.0, rng.randf_range(2.0, _world.chunk_size - 2.0))
 		var world_x := position.x + local_position.x
@@ -167,8 +175,21 @@ func _build_vegetation() -> void:
 		var scale := rng.randf_range(0.5, 1.45)
 		var basis := Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(scale, scale * rng.randf_range(0.65, 1.0), scale))
 		rock_transforms.append(Transform3D(basis, local_position))
+	for index in grass_budget:
+		var local_position := Vector3(rng.randf_range(0.6, _world.chunk_size - 0.6), 0.0, rng.randf_range(0.6, _world.chunk_size - 0.6))
+		var world_x := position.x + local_position.x
+		var world_z := position.z + local_position.z
+		if _world.distance_to_river(world_x, world_z) < _world.river_half_width + 2.5:
+			continue
+		if _world.is_landmark_clearance(Vector2(world_x, world_z)):
+			continue
+		local_position.y = _world.sample_height(world_x, world_z) + 0.02
+		var scale := rng.randf_range(0.65, 1.25)
+		var basis := Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(scale, scale * rng.randf_range(0.72, 1.22), scale))
+		grass_transforms.append(Transform3D(basis, local_position))
 	_add_multimesh("Trees", _world.get_tree_mesh(), tree_transforms, 260.0)
 	_add_multimesh("Rocks", _world.get_rock_mesh(), rock_transforms, 210.0)
+	_add_multimesh("Grass", _world.get_grass_mesh(), grass_transforms, 92.0)
 	_add_tree_collisions(tree_transforms)
 
 
@@ -207,4 +228,3 @@ func _add_tree_collisions(tree_transforms: Array[Transform3D]) -> void:
 		collision.position = source.origin + Vector3.UP * shape.height * 0.5
 		body.add_child(collision)
 	add_child(body)
-

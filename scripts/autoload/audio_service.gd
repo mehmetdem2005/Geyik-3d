@@ -22,10 +22,10 @@ func play_cue(cue: StringName, world_position := Vector3.INF) -> void:
 		var player_3d := AudioStreamPlayer3D.new()
 		player_3d.stream = stream
 		player_3d.bus = &"SFX"
-		player_3d.global_position = world_position
 		player_3d.max_distance = 170.0 if cue == &"rifle_shot" else 38.0
 		player_3d.finished.connect(player_3d.queue_free)
 		add_child(player_3d)
+		player_3d.global_position = world_position
 		player_3d.play()
 		return
 	var player := AudioStreamPlayer.new()

@@ -2,11 +2,12 @@ class_name PlayerController
 extends CharacterBody3D
 
 @export_category("Movement")
-@export var walk_speed := 5.0
-@export var sprint_speed := 8.2
-@export var crouch_speed := 2.45
+@export var walk_speed := 4.6
+@export var sprint_speed := 7.35
+@export var crouch_speed := 2.25
 @export var swim_speed := 3.1
-@export var acceleration := 18.0
+@export var acceleration := 10.5
+@export var deceleration := 19.0
 @export var air_control := 3.0
 @export var jump_velocity := 6.0
 
@@ -131,7 +132,9 @@ func _handle_movement(delta: float) -> void:
 	elif is_sprinting:
 		target_speed = sprint_speed
 	var target_velocity := world_direction * target_speed * clampf(input_vector.length(), 0.0, 1.0)
-	var control := acceleration if is_on_floor() or is_swimming else air_control
+	var has_input := not target_velocity.is_zero_approx()
+	var ground_control := acceleration if has_input else deceleration
+	var control := ground_control if is_on_floor() or is_swimming else air_control
 	velocity.x = move_toward(velocity.x, target_velocity.x, control * delta)
 	velocity.z = move_toward(velocity.z, target_velocity.z, control * delta)
 
@@ -172,11 +175,14 @@ func _update_camera_motion(delta: float) -> void:
 	var horizontal_speed := Vector2(velocity.x, velocity.z).length()
 	var bob_strength := float(SettingsService.get_value(&"camera_bob", 0.65))
 	if (is_on_floor() or is_swimming) and horizontal_speed > 0.3:
-		_bob_phase += delta * horizontal_speed * (1.1 if is_swimming else 1.65)
-		camera.position.y = sin(_bob_phase * 2.0) * 0.026 * bob_strength
-		camera.position.x = cos(_bob_phase) * 0.02 * bob_strength
+		_bob_phase += delta * horizontal_speed * (1.0 if is_swimming else 1.48)
+		var sprint_weight := 1.28 if is_sprinting else 1.0
+		camera.position.y = sin(_bob_phase * 2.0) * 0.022 * bob_strength * sprint_weight
+		camera.position.x = cos(_bob_phase) * 0.016 * bob_strength * sprint_weight
+		camera.rotation.z = lerpf(camera.rotation.z, sin(_bob_phase) * 0.006 * bob_strength, minf(1.0, delta * 8.0))
 	else:
 		camera.position = camera.position.lerp(Vector3.ZERO, minf(1.0, delta * 8.0))
+		camera.rotation.z = lerpf(camera.rotation.z, 0.0, minf(1.0, delta * 8.0))
 
 
 func _update_noise() -> void:

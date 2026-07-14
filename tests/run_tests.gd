@@ -13,8 +13,9 @@ func _run() -> void:
 	_test_weapon_mass_conversion()
 	_test_damage_lifecycle()
 	_test_input_edge_consumption()
+	_test_fixed_joystick_math()
 	if _failures.is_empty():
-		print("Geyik 3D checks passed (5 suites).")
+		print("Geyik 3D checks passed (6 suites).")
 		quit(0)
 		return
 	for failure in _failures:
@@ -63,7 +64,19 @@ func _test_input_edge_consumption() -> void:
 	router.set_action(&"test_action", false)
 	_expect(router.consume_action_pressed(&"test_action"), "Touch press edge should survive button release.")
 	_expect(not router.consume_action_pressed(&"test_action"), "Touch press edge must be consumed exactly once.")
+	router.pulse_action(&"button_action")
+	_expect(router.consume_action_pressed(&"button_action"), "A mobile button pulse must create a press edge.")
 	router.free()
+
+
+func _test_fixed_joystick_math() -> void:
+	var joystick_script: GDScript = load("res://scripts/ui/virtual_joystick.gd")
+	var center: Vector2 = joystick_script.fixed_center_for_size(Vector2(264.0, 250.0), Vector2(112.0, 116.0), 70.0)
+	_expect(center.is_equal_approx(Vector2(112.0, 134.0)), "Joystick center must stay fixed in its lower-left control area.")
+	var neutral: Vector2 = joystick_script.vector_from_touch(center + Vector2(4.0, 2.0), center, 70.0, 0.12)
+	_expect(neutral.is_zero_approx(), "Joystick deadzone should suppress accidental drift.")
+	var forward: Vector2 = joystick_script.vector_from_touch(center + Vector2(0.0, -100.0), center, 70.0, 0.12)
+	_expect(forward.distance_to(Vector2.UP) < 0.001, "Joystick must clamp and preserve forward direction.")
 
 
 func _expect(condition: bool, message: String) -> void:

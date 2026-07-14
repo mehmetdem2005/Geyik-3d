@@ -3,6 +3,7 @@ extends Control
 
 @export var radius := 70.0
 @export var deadzone := 0.12
+@export var center_from_bottom_left := Vector2(112.0, 116.0)
 
 var _finger_id := -1
 var _center := Vector2.ZERO
@@ -12,6 +13,7 @@ var _mouse_active := false
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	clip_contents = false
 	set_process_unhandled_input(false)
 	resized.connect(_reset_idle_center)
 	call_deferred("_reset_idle_center")
@@ -52,24 +54,22 @@ func _draw() -> void:
 func _reset_idle_center() -> void:
 	if _finger_id != -1 or _mouse_active or size.is_zero_approx():
 		return
-	_center = Vector2(minf(150.0, size.x * 0.28), maxf(radius + 24.0, size.y - 145.0))
+	_center = fixed_center_for_size(size, center_from_bottom_left, radius)
 	_knob = _center
 	queue_redraw()
 
 
 func _begin(position: Vector2) -> void:
-	_center = position
-	_knob = position
-	InputRouter.set_move_vector(Vector2.ZERO, true)
-	queue_redraw()
+	# The movement control is deliberately fixed in the lower-left corner. This
+	# keeps muscle memory stable and prevents a second touch from moving the base.
+	_center = fixed_center_for_size(size, center_from_bottom_left, radius)
+	_update_stick(position)
 
 
 func _update_stick(position: Vector2) -> void:
 	var offset := (position - _center).limit_length(radius)
 	_knob = _center + offset
-	var normalized := offset / radius
-	if normalized.length() < deadzone:
-		normalized = Vector2.ZERO
+	var normalized := vector_from_touch(position, _center, radius, deadzone)
 	InputRouter.set_move_vector(normalized, true)
 	queue_redraw()
 
@@ -77,5 +77,25 @@ func _update_stick(position: Vector2) -> void:
 func _end() -> void:
 	_finger_id = -1
 	_mouse_active = false
+	_center = fixed_center_for_size(size, center_from_bottom_left, radius)
+	_knob = _center
 	InputRouter.release_move()
 	queue_redraw()
+
+
+static func fixed_center_for_size(control_size: Vector2, offset: Vector2, minimum_radius: float) -> Vector2:
+	return Vector2(
+		clampf(offset.x, minimum_radius + 8.0, control_size.x - minimum_radius - 8.0),
+		clampf(control_size.y - offset.y, minimum_radius + 8.0, control_size.y - minimum_radius - 8.0)
+	)
+
+
+static func vector_from_touch(position: Vector2, center: Vector2, maximum_radius: float, input_deadzone: float) -> Vector2:
+	if maximum_radius <= 0.0:
+		return Vector2.ZERO
+	var raw := (position - center) / maximum_radius
+	var strength := minf(raw.length(), 1.0)
+	if strength <= input_deadzone:
+		return Vector2.ZERO
+	var remapped_strength := inverse_lerp(input_deadzone, 1.0, strength)
+	return raw.normalized() * remapped_strength

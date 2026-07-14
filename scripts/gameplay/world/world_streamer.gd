@@ -15,9 +15,10 @@ var _continental_noise := FastNoiseLite.new()
 var _detail_noise := FastNoiseLite.new()
 var _biome_noise := FastNoiseLite.new()
 var _ground_material: StandardMaterial3D
-var _water_material: StandardMaterial3D
+var _water_material: Material
 var _tree_mesh: ArrayMesh
-var _rock_mesh: SphereMesh
+var _rock_mesh: Mesh
+var _grass_mesh: ArrayMesh
 var _bridge_deck_y := 1.0
 var _refresh_accumulator := 0.0
 
@@ -35,6 +36,11 @@ func _ready() -> void:
 func set_player(player: Node) -> void:
 	_player = player as Node3D
 	_refresh_streaming(true)
+	# The analytical terrain is available immediately, but the collision and
+	# visual mesh are streamed. Build the player's current chunk before the first
+	# playable frame so a slow phone can never reveal the sky below the terrain.
+	if _active_chunks.is_empty() and not _generation_queue.is_empty():
+		_generate_next_chunk()
 
 
 func _process(delta: float) -> void:
@@ -58,13 +64,13 @@ func sample_height(world_x: float, world_z: float) -> float:
 func sample_ground_color(world_x: float, world_z: float, height: float) -> Color:
 	var river_distance := distance_to_river(world_x, world_z)
 	if river_distance < river_half_width + 2.0:
-		return Color("#8a7856")
+		return Color("#8f8068")
 	var biome := _biome_noise.get_noise_2d(world_x, world_z)
 	if height > 8.0:
-		return Color("#66705c")
+		return Color("#898b83")
 	if biome > 0.22:
-		return Color("#4f783d")
-	return Color("#345f36")
+		return Color("#748b6d")
+	return Color("#657d60")
 
 
 func river_center_x(world_z: float) -> float:
@@ -88,7 +94,11 @@ func get_water_level() -> float:
 
 
 func is_landmark_clearance(point: Vector2) -> bool:
-	return point.distance_to(Vector2(river_center_x(0.0), 0.0)) < 34.0 or point.distance_to(Vector2(42.0, 18.0)) < 18.0
+	return (
+		point.distance_to(Vector2(river_center_x(0.0), 0.0)) < 34.0
+		or point.distance_to(Vector2(42.0, 18.0)) < 18.0
+		or point.distance_to(Vector2(50.0, 6.0)) < 24.0
+	)
 
 
 func seed_for_chunk(coordinate: Vector2i) -> int:
@@ -99,7 +109,7 @@ func get_ground_material() -> StandardMaterial3D:
 	return _ground_material
 
 
-func get_water_material() -> StandardMaterial3D:
+func get_water_material() -> Material:
 	return _water_material
 
 
@@ -107,8 +117,12 @@ func get_tree_mesh() -> ArrayMesh:
 	return _tree_mesh
 
 
-func get_rock_mesh() -> SphereMesh:
+func get_rock_mesh() -> Mesh:
 	return _rock_mesh
+
+
+func get_grass_mesh() -> ArrayMesh:
+	return _grass_mesh
 
 
 func _sample_base_height(world_x: float, world_z: float) -> float:
@@ -160,7 +174,7 @@ func _generate_next_chunk() -> void:
 	if _active_chunks.has(coordinate):
 		return
 	var distance: float = coordinate.distance_squared_to(_current_center)
-	var resolution: int = 16 if distance <= 1.0 else 10
+	var resolution := 28 if distance <= 2.0 else (18 if distance <= 8.0 else 12)
 	var chunk := WorldChunk.new()
 	_active_chunks[coordinate] = chunk
 	add_child(chunk)
@@ -170,62 +184,123 @@ func _generate_next_chunk() -> void:
 func _build_shared_assets() -> void:
 	_ground_material = StandardMaterial3D.new()
 	_ground_material.vertex_color_use_as_albedo = true
-	_ground_material.roughness = 0.94
+	_ground_material.albedo_texture = load("res://assets/textures/forest_ground_04/forest_ground_04_diff_1k.jpg")
+	_ground_material.normal_enabled = true
+	_ground_material.normal_texture = load("res://assets/textures/forest_ground_04/forest_ground_04_nor_gl_1k.jpg")
+	_ground_material.normal_scale = 0.72
+	_ground_material.roughness = 0.96
+	_ground_material.roughness_texture = load("res://assets/textures/forest_ground_04/forest_ground_04_rough_1k.jpg")
+	_ground_material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
 	_ground_material.cull_mode = BaseMaterial3D.CULL_BACK
-	_water_material = StandardMaterial3D.new()
-	_water_material.albedo_color = Color(0.08, 0.46, 0.62, 0.76)
-	_water_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_water_material.roughness = 0.12
-	_water_material.metallic = 0.08
-	_water_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var water_shader_material := ShaderMaterial.new()
+	water_shader_material.shader = load("res://assets/shaders/water.gdshader")
+	_water_material = water_shader_material
 	_tree_mesh = _create_tree_mesh()
-	_rock_mesh = SphereMesh.new()
-	_rock_mesh.radius = 0.9
-	_rock_mesh.height = 1.35
-	_rock_mesh.radial_segments = 7
-	_rock_mesh.rings = 4
-	var rock_material := StandardMaterial3D.new()
-	rock_material.albedo_color = Color("#73796f")
-	rock_material.roughness = 0.95
-	_rock_mesh.material = rock_material
+	_grass_mesh = _create_grass_mesh()
+	_rock_mesh = _load_combined_model_mesh("res://assets/models/rock_moss_set_01/rock_moss_set_01_1k.gltf")
+	if _rock_mesh == null:
+		var fallback_rock := SphereMesh.new()
+		fallback_rock.radius = 0.9
+		fallback_rock.height = 1.35
+		fallback_rock.radial_segments = 14
+		fallback_rock.rings = 8
+		var rock_material := StandardMaterial3D.new()
+		rock_material.albedo_color = Color("#73796f")
+		rock_material.roughness = 0.95
+		fallback_rock.material = rock_material
+		_rock_mesh = fallback_rock
 
 
 func _create_tree_mesh() -> ArrayMesh:
 	var trunk_material := StandardMaterial3D.new()
-	trunk_material.albedo_color = Color("#5b3d28")
-	trunk_material.roughness = 1.0
-	var foliage_material := StandardMaterial3D.new()
-	foliage_material.albedo_color = Color("#1f4d2d")
-	foliage_material.roughness = 0.92
+	trunk_material.albedo_texture = load("res://assets/textures/pine_tree_01/pine_tree_01_bark_diff_1k.jpg")
+	trunk_material.normal_enabled = true
+	trunk_material.normal_texture = load("res://assets/textures/pine_tree_01/pine_tree_01_bark_nor_gl_1k.jpg")
+	trunk_material.normal_scale = 0.72
+	trunk_material.roughness = 0.92
+	var bark_arm: Texture2D = load("res://assets/textures/pine_tree_01/pine_tree_01_bark_arm_1k.jpg")
+	trunk_material.roughness_texture = bark_arm
+	trunk_material.roughness_texture_channel = BaseMaterial3D.TEXTURE_CHANNEL_GREEN
+	trunk_material.ao_enabled = true
+	trunk_material.ao_texture = bark_arm
+	trunk_material.ao_texture_channel = BaseMaterial3D.TEXTURE_CHANNEL_RED
+	var foliage_material := ShaderMaterial.new()
+	foliage_material.shader = load("res://assets/shaders/pine_card.gdshader")
+	foliage_material.set_shader_parameter(&"albedo_texture", load("res://assets/textures/pine_tree_01/pine_tree_01_branch_rgba_1k.png"))
 	var trunk := CylinderMesh.new()
-	trunk.top_radius = 0.32
-	trunk.bottom_radius = 0.48
-	trunk.height = 5.0
-	trunk.radial_segments = 7
+	trunk.top_radius = 0.24
+	trunk.bottom_radius = 0.46
+	trunk.height = 6.2
+	trunk.radial_segments = 12
+	trunk.rings = 4
 	trunk.material = trunk_material
-	var crown_low := CylinderMesh.new()
-	crown_low.bottom_radius = 2.55
-	crown_low.top_radius = 0.15
-	crown_low.height = 4.4
-	crown_low.radial_segments = 7
-	crown_low.material = foliage_material
-	var crown_high := CylinderMesh.new()
-	crown_high.bottom_radius = 1.9
-	crown_high.top_radius = 0.08
-	crown_high.height = 3.8
-	crown_high.radial_segments = 7
-	crown_high.material = foliage_material
+	var foliage_card := QuadMesh.new()
+	foliage_card.size = Vector2.ONE
+	foliage_card.material = foliage_material
 	var result := ArrayMesh.new()
 	var trunk_surface := SurfaceTool.new()
-	trunk_surface.append_from(trunk, 0, Transform3D(Basis.IDENTITY, Vector3.UP * 2.5))
+	trunk_surface.append_from(trunk, 0, Transform3D(Basis.IDENTITY, Vector3.UP * 3.1))
 	trunk_surface.set_material(trunk_material)
 	trunk_surface.commit(result)
 	var foliage_surface := SurfaceTool.new()
-	foliage_surface.append_from(crown_low, 0, Transform3D(Basis.IDENTITY, Vector3.UP * 5.5))
-	foliage_surface.append_from(crown_high, 0, Transform3D(Basis.IDENTITY, Vector3.UP * 8.0))
+	var tiers: Array[Vector3] = [
+		Vector3(3.65, 4.4, 1.55),
+		Vector3(4.65, 4.05, 1.5),
+		Vector3(5.6, 3.65, 1.42),
+		Vector3(6.5, 3.2, 1.34),
+		Vector3(7.3, 2.65, 1.22),
+		Vector3(8.0, 2.05, 1.08),
+		Vector3(8.58, 1.35, 0.94),
+	]
+	for tier: Vector3 in tiers:
+		for plane_index in 4:
+			var angle := float(plane_index) * PI / 4.0
+			var basis := Basis(Vector3.UP, angle).scaled(Vector3(tier.y, tier.z, 1.0))
+			foliage_surface.append_from(foliage_card, 0, Transform3D(basis, Vector3(0.0, tier.x, 0.0)))
 	foliage_surface.set_material(foliage_material)
 	foliage_surface.commit(result)
 	return result
+
+
+func _load_combined_model_mesh(path: String) -> ArrayMesh:
+	var packed := load(path) as PackedScene
+	if packed == null:
+		return null
+	var root := packed.instantiate()
+	var result := ArrayMesh.new()
+	for child in root.find_children("*", "MeshInstance3D", true, false):
+		var mesh_instance := child as MeshInstance3D
+		if mesh_instance == null or mesh_instance.mesh == null:
+			continue
+		for surface_index in mesh_instance.mesh.get_surface_count():
+			var surface := SurfaceTool.new()
+			surface.append_from(mesh_instance.mesh, surface_index, mesh_instance.transform)
+			surface.set_material(mesh_instance.mesh.surface_get_material(surface_index))
+			surface.commit(result)
+	root.free()
+	return result if result.get_surface_count() > 0 else null
+
+
+func _create_grass_mesh() -> ArrayMesh:
+	var material := ShaderMaterial.new()
+	material.shader = load("res://assets/shaders/grass.gdshader")
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for angle in [0.0, PI * 0.5]:
+		var basis := Basis(Vector3.UP, angle)
+		var points := [
+			Vector3(-0.11, 0.0, 0.0), Vector3(0.11, 0.0, 0.0),
+			Vector3(-0.065, 0.48, 0.0), Vector3(0.065, 0.48, 0.0),
+			Vector3(0.0, 0.82, 0.0),
+		]
+		var triangle_indices := [0, 1, 2, 1, 3, 2, 2, 3, 4]
+		for point_index in triangle_indices:
+			var point: Vector3 = points[point_index]
+			surface.set_normal(basis * Vector3.FORWARD)
+			surface.set_uv(Vector2(point.x / 0.22 + 0.5, point.y / 0.82))
+			surface.add_vertex(basis * point)
+	surface.set_material(material)
+	return surface.commit()
 
 
 func _build_bridge_landmark() -> void:

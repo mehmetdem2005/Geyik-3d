@@ -38,3 +38,6 @@ jobs:
 
       - name: Run deterministic unit checks
         run: godot --headless --path . --script res://tests/run_tests.gd
+
+      - name: Exercise mobile joystick and fire button
+        run: godot --headless --audio-driver Dummy --path . --quit-after 600 -- --ci-touch-smoke

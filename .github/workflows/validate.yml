@@ -24,7 +24,7 @@ jobs:
           include-templates: false
 
       - name: Import project and check scripts
-        run: godot --headless --path . --editor --quit-after 5
+        run: godot --headless --path . --import
 
       - name: Boot the complete game scene
         shell: bash

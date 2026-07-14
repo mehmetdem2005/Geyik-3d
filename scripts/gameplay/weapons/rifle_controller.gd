@@ -14,8 +14,8 @@ var _cooldown := 0.0
 var _reload_remaining := 0.0
 var _rng := RandomNumberGenerator.new()
 var _base_fov := 75.0
-var _weapon_rest_position := Vector3(0.28, -0.24, -0.52)
-var _weapon_aim_position := Vector3(0.0, -0.17, -0.38)
+var _weapon_rest_position := Vector3(0.33, -0.29, -0.72)
+var _weapon_aim_position := Vector3(0.0, -0.17, -0.46)
 var _wind_acceleration := Vector3(0.42, 0.0, 0.16)
 var _muzzle_flash: OmniLight3D
 
@@ -187,7 +187,7 @@ func _build_weapon_visual() -> void:
 	walnut.roughness = 0.65
 
 	_add_box("Receiver", Vector3(0.12, 0.12, 0.48), Vector3(0.0, 0.0, -0.12), dark_metal)
-	_add_box("Stock", Vector3(0.16, 0.18, 0.46), Vector3(0.0, -0.03, 0.29), walnut)
+	_add_box("Stock", Vector3(0.14, 0.16, 0.34), Vector3(0.0, -0.03, 0.23), walnut)
 	_add_cylinder("Barrel", 0.025, 0.74, Vector3(0.0, 0.045, -0.72), Vector3(deg_to_rad(90.0), 0.0, 0.0), dark_metal)
 	_add_cylinder("Scope", 0.042, 0.42, Vector3(0.0, 0.15, -0.25), Vector3(deg_to_rad(90.0), 0.0, 0.0), dark_metal)
 	_muzzle_flash = OmniLight3D.new()

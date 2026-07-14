@@ -145,10 +145,23 @@ func _handle_movement(delta: float) -> void:
 		velocity.y = jump_velocity
 
 	move_and_slide()
+	_recover_from_streamed_terrain()
 	_status_emit_accumulator += delta
 	if _status_emit_accumulator >= 0.1:
 		_status_emit_accumulator = 0.0
 		EventBus.stamina_changed.emit(stamina, maximum_stamina)
+
+
+func _recover_from_streamed_terrain() -> void:
+	if _world_streamer == null or is_swimming:
+		return
+	var ground_height := float(_world_streamer.call("sample_height", global_position.x, global_position.z))
+	if global_position.y >= ground_height + 0.08:
+		return
+	# Procedural collision is streamed one chunk per frame. Keep the player's
+	# feet on the analytical terrain surface if a collider is not ready yet.
+	global_position.y = ground_height + 0.08
+	velocity.y = maxf(velocity.y, 0.0)
 
 
 func _update_camera_motion(delta: float) -> void:
@@ -215,4 +228,3 @@ func _on_died(_info: DamageInfo) -> void:
 	EventBus.player_health_changed.emit(0.0, health.maximum_health)
 	EventBus.player_died.emit()
 	GameState.set_phase(GameState.Phase.RESULTS)
-

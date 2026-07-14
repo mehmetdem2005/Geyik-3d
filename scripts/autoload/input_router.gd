@@ -51,14 +51,15 @@ func toggle_action(action: StringName) -> bool:
 
 
 func is_action_held(action: StringName) -> bool:
-	return bool(_actions_held.get(action, false)) or Input.is_action_pressed(action)
+	var keyboard_or_gamepad := Input.is_action_pressed(action) if InputMap.has_action(action) else false
+	return bool(_actions_held.get(action, false)) or keyboard_or_gamepad
 
 
 func consume_action_pressed(action: StringName) -> bool:
 	if bool(_actions_pressed.get(action, false)):
 		_actions_pressed[action] = false
 		return true
-	return Input.is_action_just_pressed(action)
+	return Input.is_action_just_pressed(action) if InputMap.has_action(action) else false
 
 
 func clear_gameplay_input() -> void:
@@ -67,4 +68,3 @@ func clear_gameplay_input() -> void:
 	_touch_move_active = false
 	_actions_held.clear()
 	_actions_pressed.clear()
-

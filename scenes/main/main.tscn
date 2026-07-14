@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/gameplay/main/game_root.gd" id="1_root"]
 [ext_resource type="Script" path="res://scripts/gameplay/world/world_streamer.gd" id="2_world"]
@@ -7,13 +7,11 @@
 [ext_resource type="Script" path="res://scripts/gameplay/world/pickup_director.gd" id="5_pickups"]
 [ext_resource type="Script" path="res://scripts/gameplay/missions/hunt_mission.gd" id="6_mission"]
 [ext_resource type="Script" path="res://scripts/ui/mobile_hud.gd" id="7_hud"]
+[ext_resource type="Texture2D" path="res://assets/environment/epping_forest_01/epping_forest_01_1k.hdr" id="8_hdri"]
 
-[sub_resource type="ProceduralSkyMaterial" id="SkyMaterial"]
-sky_top_color = Color(0.15, 0.29, 0.36, 1)
-sky_horizon_color = Color(0.73, 0.68, 0.51, 1)
-ground_bottom_color = Color(0.04, 0.08, 0.055, 1)
-ground_horizon_color = Color(0.48, 0.48, 0.34, 1)
-sun_angle_max = 18.0
+[sub_resource type="PanoramaSkyMaterial" id="SkyMaterial"]
+panorama = ExtResource("8_hdri")
+energy_multiplier = 0.72
 
 [sub_resource type="Sky" id="Sky"]
 sky_material = SubResource("SkyMaterial")
@@ -24,15 +22,16 @@ background_mode = 2
 sky = SubResource("Sky")
 ambient_light_source = 3
 ambient_light_color = Color(0.58, 0.64, 0.56, 1)
-ambient_light_energy = 0.72
+ambient_light_energy = 0.68
 reflected_light_source = 2
-tonemap_mode = 2
+tonemap_mode = 3
 fog_enabled = true
 fog_light_color = Color(0.62, 0.68, 0.59, 1)
 fog_light_energy = 0.55
-fog_density = 0.0028
+fog_density = 0.0012
 fog_height = 2.0
 fog_height_density = 0.045
+fog_sky_affect = 0.12
 
 [node name="GameRoot" type="Node3D"]
 script = ExtResource("1_root")
@@ -43,10 +42,11 @@ environment = SubResource("Environment")
 [node name="Sun" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-48, -32, 0)
 light_color = Color(1, 0.87, 0.69, 1)
-light_energy = 1.18
+light_energy = 1.08
 shadow_enabled = true
 directional_shadow_max_distance = 145.0
 directional_shadow_mode = 1
+directional_shadow_blend_splits = true
 
 [node name="WorldStreamer" type="Node3D" parent="."]
 unique_name_in_owner = true
@@ -68,4 +68,3 @@ unique_name_in_owner = true
 
 [node name="MobileHUD" type="CanvasLayer" parent="."]
 script = ExtResource("7_hud")
-

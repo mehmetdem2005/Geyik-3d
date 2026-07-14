@@ -196,36 +196,45 @@ func _build_touch_controls() -> void:
 	_root.add_child(_controls)
 	var look_zone := TouchLookZone.new()
 	look_zone.name = "LookZone"
-	look_zone.anchor_left = 0.4
+	look_zone.anchor_left = 0.32
 	look_zone.anchor_right = 1.0
 	look_zone.anchor_bottom = 1.0
 	_controls.add_child(look_zone)
 	var joystick := HuntVirtualJoystick.new()
 	joystick.name = "MovementJoystick"
-	joystick.anchor_right = 0.55
+	joystick.anchor_top = 1.0
 	joystick.anchor_bottom = 1.0
+	joystick.offset_left = 12.0
+	joystick.offset_right = 276.0
+	joystick.offset_top = -262.0
+	joystick.offset_bottom = -12.0
 	_controls.add_child(joystick)
 
 	var fire := _action_button("ATEŞ", Vector2(1, 1), Vector2(-82, -86), 104, DANGER)
+	fire.name = "FireButton"
 	_bind_hold(fire, &"fire")
-	var reload := _action_button("DOLDUR", Vector2(1, 1), Vector2(-190, -64), 68, FOREST.lightened(0.1))
+	var reload := _action_button("DOLDUR", Vector2(1, 1), Vector2(-198, -74), 68, FOREST.lightened(0.1))
+	reload.name = "ReloadButton"
 	_bind_press(reload, &"reload")
-	_aim_button = _action_button("NİŞAN", Vector2(1, 1), Vector2(-82, -200), 70, FOREST.lightened(0.1))
+	_aim_button = _action_button("NİŞAN", Vector2(1, 1), Vector2(-86, -212), 72, FOREST.lightened(0.1))
+	_aim_button.name = "AimButton"
 	_aim_button.pressed.connect(func() -> void:
 		var active := InputRouter.toggle_action(&"aim")
 		_aim_button.modulate = GOLD if active else Color.WHITE
 	)
-	_interact_button = _action_button("EYLEM", Vector2(1, 1), Vector2(-184, -156), 72, GOLD.darkened(0.25))
+	_interact_button = _action_button("EYLEM", Vector2(1, 1), Vector2(-202, -164), 72, GOLD.darkened(0.25))
 	_bind_press(_interact_button, &"interact")
 	_interact_button.hide()
-	var sprint := _action_button("KOŞ", Vector2(0, 1), Vector2(250, -82), 72, FOREST.lightened(0.1))
+	var sprint := _action_button("KOŞ", Vector2(0, 1), Vector2(320, -72), 72, FOREST.lightened(0.1))
+	sprint.name = "SprintButton"
 	_bind_hold(sprint, &"sprint")
-	_crouch_button = _action_button("EĞİL", Vector2(0, 1), Vector2(336, -82), 66, FOREST.lightened(0.1))
+	_crouch_button = _action_button("EĞİL", Vector2(0, 1), Vector2(400, -72), 66, FOREST.lightened(0.1))
 	_crouch_button.pressed.connect(func() -> void:
 		var active := InputRouter.toggle_action(&"crouch")
 		_crouch_button.modulate = GOLD if active else Color.WHITE
 	)
-	var jump := _action_button("ZIPLA", Vector2(0, 1), Vector2(414, -82), 66, FOREST.lightened(0.1))
+	var jump := _action_button("ZIPLA", Vector2(1, 1), Vector2(-202, -260), 70, FOREST.lightened(0.1))
+	jump.name = "JumpButton"
 	_bind_press(jump, &"jump")
 	var pause := _action_button("Ⅱ", Vector2(1, 0), Vector2(-42, 128), 52, FOREST)
 	pause.pressed.connect(GameState.toggle_pause)
@@ -412,13 +421,11 @@ func _bind_hold(button: Button, action: StringName) -> void:
 
 
 func _bind_press(button: Button, action: StringName) -> void:
-	button.pressed.connect(func() -> void:
-		InputRouter.set_action(action, true)
-		InputRouter.set_action(action, false)
-	)
+	button.button_down.connect(func() -> void: InputRouter.pulse_action(action))
 
 
 func _style_button(button: Button, color: Color, radius := 12.0) -> void:
+	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_size_override("font_size", 16)
 	button.add_theme_color_override("font_color", IVORY)
 	button.add_theme_stylebox_override("normal", _style_box(Color(color, 0.82), radius, Color(IVORY, 0.56), 2))

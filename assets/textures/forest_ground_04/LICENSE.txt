@@ -1,0 +1,9 @@
+Forest Ground 04 by Poly Haven
+Source: https://polyhaven.com/a/forest_ground_04
+License: CC0 1.0 Universal (public domain dedication)
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Included mobile-sized maps:
+- 1K diffuse JPG
+- 1K OpenGL normal JPG
+- 1K roughness JPG

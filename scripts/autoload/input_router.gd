@@ -44,6 +44,12 @@ func set_action(action: StringName, pressed: bool) -> void:
 		_actions_pressed[action] = true
 
 
+func pulse_action(action: StringName) -> void:
+	## Records a one-shot touch action without relying on a later release event.
+	## This is important on Android when a second finger leaves the screen first.
+	_actions_pressed[action] = true
+
+
 func toggle_action(action: StringName) -> bool:
 	var next_value := not bool(_actions_held.get(action, false))
 	set_action(action, next_value)
